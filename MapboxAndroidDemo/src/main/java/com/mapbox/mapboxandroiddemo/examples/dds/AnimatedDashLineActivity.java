@@ -36,7 +36,8 @@ public class AnimatedDashLineActivity extends AppCompatActivity implements OnMap
   private MapView mapView;
   private MapboxMap mapboxMap;
   private Handler handler;
-  private String TAG = "AnimatedDashLine";
+  private String tag = "AnimatedDashLine";
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -57,7 +58,7 @@ public class AnimatedDashLineActivity extends AppCompatActivity implements OnMap
   public void onMapReady(MapboxMap mapboxMap) {
     AnimatedDashLineActivity.this.mapboxMap = mapboxMap;
     initBikePathLayer();
-    Log.d(TAG, "onMapReady: ");
+    Log.d(tag, "onMapReady: ");
   }
 
   private void initBikePathLayer() {
@@ -74,30 +75,35 @@ public class AnimatedDashLineActivity extends AppCompatActivity implements OnMap
         lineJoin(LINE_JOIN_ROUND)
       );
       mapboxMap.addLayer(animatedDashBikeLineLayer);
-      Log.d(TAG, "initBikePathLayer: here");
+      Log.d(tag, "initBikePathLayer: here");
       Runnable runnable = new RefreshDashAndGapRunnable(this.mapboxMap, new Handler());
-      Log.d(TAG, "initBikePathLayer: runnable made");
+      Log.d(tag, "initBikePathLayer: runnable made");
       handler.postDelayed(runnable, 25);
-      Log.d(TAG, "initBikePathLayer: postDelayed");
+      Log.d(tag, "initBikePathLayer: postDelayed");
     } catch (MalformedURLException malformedUrlException) {
       Log.d("AnimatedDashLine", "Check the URL: " + malformedUrlException.getMessage());
     }
   }
 
   private static class RefreshDashAndGapRunnable implements Runnable {
-    private float t, a, b, c, d;
+
+    private float valueOne, valueTwo, valueThree, valueFour, ValueFive;
     private float dashLength = 1;
     private float gapLength = 3;
+
     // We divide the animation up into 40 steps to make careful use of the finite space in
     // LineAtlas
     private float steps = 40;
+
     // A # of steps proportional to the dashLength are devoted to manipulating the dash
     private float dashSteps = steps * dashLength / (gapLength + dashLength);
+
     // A # of steps proportional to the gapLength are devoted to manipulating the gap
     private float gapSteps = steps - dashSteps;
 
     // The current step #
     private int step = 0;
+
     private MapboxMap mapboxMap;
     private Handler handler;
     private String TAG = "AnimatedDashLine";
@@ -106,6 +112,8 @@ public class AnimatedDashLineActivity extends AppCompatActivity implements OnMap
       this.mapboxMap = mapboxMap;
       this.handler = handler;
       Log.d(TAG, "RefreshDashAndGapRunnable: finished");
+
+      mapboxMap.getProjection().getProjectedMetersForLatLng()
     }
 
     @Override
@@ -116,21 +124,21 @@ public class AnimatedDashLineActivity extends AppCompatActivity implements OnMap
         step = 0;
       }
       if (step < dashSteps) {
-        t = step / dashSteps;
-        a = (1 - t) * dashLength;
-        b = gapLength;
-        c = t * dashLength;
-        d = 0;
+        valueOne = step / dashSteps;
+        valueTwo = (1 - valueOne) * dashLength;
+        valueThree = gapLength;
+        valueFour = valueOne * dashLength;
+        ValueFive = 0;
       } else {
-        t = (step - dashSteps) / (gapSteps);
-        a = 0;
-        b = (1 - t) * gapLength;
-        c = dashLength;
-        d = t * gapLength;
+        valueOne = (step - dashSteps) / (gapSteps);
+        valueTwo = 0;
+        valueThree = (1 - valueOne) * gapLength;
+        valueFour = dashLength;
+        ValueFive = valueOne * gapLength;
       }
       Log.d(TAG, "run: here");
       mapboxMap.getLayer("animated_line_layer_id").setProperties(
-        lineDasharray(new Float[] {a, b, c, d})
+        lineDasharray(new Float[] {valueTwo, valueThree, valueFour, ValueFive})
       );
       Log.d(TAG, "run: layer done being gotten");
       handler.postDelayed(this, 25);
